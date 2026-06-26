@@ -80,10 +80,8 @@ type EdgeTtsModule = {
 
 function resolveEdgeTtsModule(): EdgeTtsModule | null {
   try {
-    // 使用普通 require 而非 eval('require')，配合 next.config.js 的
-    // serverExternalPackages 确保 webpack 正确追踪并在 Cloud Function 运行时可用
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('edge-tts-universal') as EdgeTtsModule;
+    // eslint-disable-next-line no-eval
+    return eval('require')('edge-tts-universal') as EdgeTtsModule;
   } catch (error) {
     // edge-tts-universal 需要 native Node.js，边缘运行时不可用
     console.warn('[book-tts] edge-tts-universal 不可用:', (error as Error).message);

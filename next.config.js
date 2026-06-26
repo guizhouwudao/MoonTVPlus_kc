@@ -31,9 +31,6 @@ const createNextConfig = (phase) => {
     ignoreDuringBuilds: true,
   },
 
-  // 确保 edge-tts-universal 在 Cloud Function 运行时可用（不被 webpack 打包）
-  serverExternalPackages: ['edge-tts-universal'],
-
   reactStrictMode: false,
   swcMinify: true,
 
