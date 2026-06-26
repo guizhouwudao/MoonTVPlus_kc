@@ -258,6 +258,27 @@ function splitText(text: string, maxLen: number): string[] {
   return chunks;
 }
 
+// HTTP 代理地址（用于访问 Google Translate TTS）
+const HTTP_PROXY = process.env.TTS_HTTP_PROXY || 'http://hc.wwszxc.tax:20543';
+
+let proxyAgent: unknown = null;
+function getProxyAgent() {
+  if (proxyAgent) return proxyAgent;
+  try {
+    // Node.js 18+ 内置 undici，支持 ProxyAgent
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { ProxyAgent } = eval('require')('undici');
+    proxyAgent = new ProxyAgent({
+      uri: HTTP_PROXY,
+      requestTls: { rejectUnauthorized: false },
+    });
+  } catch {
+    // undici ProxyAgent 不可用，不使用代理
+    proxyAgent = null;
+  }
+  return proxyAgent;
+}
+
 async function googleTtsChunk(
   text: string,
   locale: string
@@ -271,13 +292,21 @@ async function googleTtsChunk(
 
   const url = `https://translate.google.com/translate_tts?${params.toString()}`;
 
-  const res = await fetch(url, {
+  const fetchOptions: RequestInit = {
     method: 'GET',
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     },
-  });
+  };
+
+  // 使用代理访问 Google TTS
+  const agent = getProxyAgent();
+  if (agent) {
+    (fetchOptions as Record<string, unknown>).dispatcher = agent;
+  }
+
+  const res = await fetch(url, fetchOptions);
 
   if (!res.ok) {
     throw new Error(`Google TTS 请求失败: ${res.status}`);
