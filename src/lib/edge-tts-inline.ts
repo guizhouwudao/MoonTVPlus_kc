@@ -292,21 +292,32 @@ async function googleTtsChunk(
 
   const url = `https://translate.google.com/translate_tts?${params.toString()}`;
 
-  const fetchOptions: RequestInit = {
-    method: 'GET',
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-    },
-  };
+  const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
-  // 使用代理访问 Google TTS
+  let res: Response | null = null;
+
+  // 优先使用代理访问 Google TTS
   const agent = getProxyAgent();
   if (agent) {
-    (fetchOptions as Record<string, unknown>).dispatcher = agent;
+    try {
+      res = await fetch(url, {
+        method: 'GET',
+        headers: { 'User-Agent': ua },
+        dispatcher: agent as never,
+      });
+    } catch (proxyErr) {
+      console.warn('[edge-tts-inline] 代理访问失败，尝试直连:', (proxyErr as Error).message);
+      res = null;
+    }
   }
 
-  const res = await fetch(url, fetchOptions);
+  // 代理失败或无代理时，直连
+  if (!res) {
+    res = await fetch(url, {
+      method: 'GET',
+      headers: { 'User-Agent': ua },
+    });
+  }
 
   if (!res.ok) {
     throw new Error(`Google TTS 请求失败: ${res.status}`);
