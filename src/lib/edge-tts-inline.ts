@@ -220,7 +220,7 @@ class InlineEdgeTTS {
       });
 
       ws.addEventListener('error', (event) => {
-        finish(new Error(`Edge TTS WebSocket 错误: ${event.message ?? 'unknown'}`));
+        finish(new Error('Edge TTS WebSocket 错误'));
       });
 
       ws.addEventListener('close', () => {
