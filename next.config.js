@@ -101,6 +101,8 @@ const createNextConfig = (phase) => {
         'better-sqlite3',
         'bindings',
         'file-uri-to-path',
+        'https-proxy-agent',
+        'agent-base',
       ]);
     }
 
