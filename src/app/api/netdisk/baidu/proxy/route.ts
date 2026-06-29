@@ -36,41 +36,8 @@ export async function GET(request: NextRequest) {
     const { url, headers } = await getBaiduDirectPlayUrl(session.meta, file.fid, cookie);
     const range = request.headers.get('range');
 
-    // If BAIDU_RELAY_URL is configured, forward the request through the relay proxy
-    // (which routes through the home bridge proxy to access Baidu from a Chinese IP)
-    const relayUrl = process.env.BAIDU_RELAY_URL;
-    if (relayUrl) {
-      const relayParams = new URLSearchParams();
-      relayParams.set('url', url);
-      relayParams.set('cookie', cookie);
-      if (range) relayParams.set('range', range);
+    // Fetch Baidu dlink directly (EdgeOne global area uses Chinese IPs directly)
 
-      const upstream = await fetch(`${relayUrl}/fetch?${relayParams.toString()}`, {
-        cache: 'no-store',
-      });
-
-      if (!upstream.ok || !upstream.body) {
-        return NextResponse.json(
-          { error: `百度网盘代理转发失败 (${upstream.status})` },
-          { status: upstream.status || 500 }
-        );
-      }
-
-      const responseHeaders = new Headers();
-      const copyHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'];
-      copyHeaders.forEach((name) => {
-        const value = upstream.headers.get(name);
-        if (value) responseHeaders.set(name, value);
-      });
-      responseHeaders.set('Cache-Control', 'private, no-store');
-
-      return new Response(upstream.body, {
-        status: range && upstream.headers.get('content-range') ? 206 : upstream.status,
-        headers: responseHeaders,
-      });
-    }
-
-    // Original logic: fetch Baidu dlink directly
     const upstream = await fetch(url, {
       headers: {
         ...headers,
