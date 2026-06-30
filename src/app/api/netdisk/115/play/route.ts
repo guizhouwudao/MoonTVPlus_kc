@@ -126,6 +126,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ url, headers: {} });
     }
 
+    if (format === 'proxy') {
+      // 代理模式：服务端下载 CDN 流并透传给客户端（用于 PotPlayer/VLC/MPV 等外部播放器）
+      const rangeHeader = request.headers.get('range') || '';
+      const cdnHeaders: Record<string, string> = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://115.com/',
+      };
+      if (rangeHeader) {
+        cdnHeaders['Range'] = rangeHeader;
+      }
+
+      const cdnResponse = await fetch(url, { headers: cdnHeaders });
+      if (!cdnResponse.ok && cdnResponse.status !== 206) {
+        return NextResponse.json({ error: `CDN 代理错误 ${cdnResponse.status}` }, { status: 502 });
+      }
+
+      const responseHeaders: Record<string, string> = {
+        'Content-Type': cdnResponse.headers.get('content-type') || 'video/mp2t',
+        'Accept-Ranges': cdnResponse.headers.get('accept-ranges') || 'bytes',
+        'Cache-Control': 'no-store',
+      };
+      const contentLength = cdnResponse.headers.get('content-length');
+      if (contentLength) {
+        responseHeaders['Content-Length'] = contentLength;
+      }
+      const contentRange = cdnResponse.headers.get('content-range');
+      if (contentRange) {
+        responseHeaders['Content-Range'] = contentRange;
+      }
+
+      return new NextResponse(cdnResponse.body, {
+        status: cdnResponse.status,
+        statusText: cdnResponse.statusText,
+        headers: responseHeaders,
+      });
+    }
+
     return NextResponse.redirect(url);
   } catch (error) {
     return NextResponse.json(

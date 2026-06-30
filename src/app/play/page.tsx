@@ -9973,9 +9973,11 @@ function PlayPageClient() {
                             // netdisk 类源的播放地址是内部 API（需要 Cookie 鉴权），Proxy-M3U8 服务端 fetch 不带 Cookie 会返回 401
                             // 因此 netdisk 源直接使用原始 URL，外部播放器（PotPlayer/VLC/MPV）能跟随 307 重定向到 CDN
                             const isNetdiskSource = currentSource?.startsWith?.('netdisk-');
-                            const proxyUrl = externalPlayerAdBlock && !isNetdiskSource
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
+                            const proxyUrl = externalPlayerAdBlock && isNetdiskSource
+                              ? `${urlToUse}${urlToUse.includes('?') ? '&' : '?'}format=proxy`
+                              : externalPlayerAdBlock && !isNetdiskSource
+                                ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
+                                : urlToUse;
                             // URL encode 避免冒号被吃掉
                             window.open(`potplayer://${proxyUrl}`, '_blank');
                           }}
@@ -10004,9 +10006,11 @@ function PlayPageClient() {
                             // 使用代理 URL
                             const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
                             const isNetdiskSource = currentSource?.startsWith?.('netdisk-');
-                            const proxyUrl = externalPlayerAdBlock && !isNetdiskSource
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
+                            const proxyUrl = externalPlayerAdBlock && isNetdiskSource
+                              ? `${urlToUse}${urlToUse.includes('?') ? '&' : '?'}format=proxy`
+                              : externalPlayerAdBlock && !isNetdiskSource
+                                ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
+                                : urlToUse;
                             // URL encode 避免冒号被吃掉
                             window.open(`vlc://${proxyUrl}`, '_blank');
                           }}
@@ -10035,9 +10039,11 @@ function PlayPageClient() {
                             // 使用代理 URL
                             const tokenParam = proxyToken ? `&token=${encodeURIComponent(proxyToken)}` : '';
                             const isNetdiskSource = currentSource?.startsWith?.('netdisk-');
-                            const proxyUrl = externalPlayerAdBlock && !isNetdiskSource
-                              ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
-                              : urlToUse;
+                            const proxyUrl = externalPlayerAdBlock && isNetdiskSource
+                              ? `${urlToUse}${urlToUse.includes('?') ? '&' : '?'}format=proxy`
+                              : externalPlayerAdBlock && !isNetdiskSource
+                                ? `${window.location.origin}/api/proxy-m3u8?url=${encodeURIComponent(urlToUse)}&source=${encodeURIComponent(currentSource)}${tokenParam}`
+                                : urlToUse;
                             // URL encode 避免冒号被吃掉
                             window.open(`mpv://${proxyUrl}`, '_blank');
                           }}
