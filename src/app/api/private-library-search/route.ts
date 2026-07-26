@@ -2,8 +2,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { embyManager } from '@/lib/emby-manager';
 import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
@@ -27,11 +27,10 @@ export async function GET(request: NextRequest) {
     const config = await getConfig();
     const results: any[] = [];
 
-    // 1. 搜索 OpenList
+    // 1. 搜索 OpenList（直接从数据库匹配标题）
     if (config.OpenListConfig?.Enabled) {
       try {
         const { db } = await import('@/lib/db');
-        const { getCachedMetaInfo, MetaInfo } = await import('@/lib/openlist-cache');
         const { resolvePathMeta } = await import('@/lib/openlist-path-meta');
         const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
 
@@ -62,36 +61,42 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. 搜索 Emby
-    if (config.EmbyConfig?.EmbyServers?.length > 0) {
-      try {
-        const { embyManager } = await import('@/lib/emby-manager');
-        const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
+    // 2. 搜索 Emby（使用 EmbyClient.getItems 传入 searchTerm）
+    const adminConfig = config as any;
+    const embySources = adminConfig.EmbyConfig?.Sources || adminConfig.EmbyConfig?.EmbyServers || [];
+    if (embySources.length > 0) {
+      for (const source of embySources) {
+        if (source.enabled === false) continue;
+        try {
+          const client = await embyManager.getClient(source.key || 'default');
+          if (!client) continue;
 
-        for (const server of config.EmbyConfig.EmbyServers) {
-          if (!server.Enabled) continue;
-          try {
-            const items = await embyManager.search(server.Key, keyword);
-            if (items && items.length > 0) {
-              for (const item of items.slice(0, 30)) {
-                results.push({
-                  id: item.Id,
-                  source: `emby:${server.Key}`,
-                  title: item.Name,
-                  poster: item.ImageTags?.Primary
-                    ? `${server.Url}/emby/Items/${item.Id}/Images/Primary?maxHeight=300&quality=80`
-                    : '',
-                  year: item.ProductionYear ? String(item.ProductionYear) : '',
-                  rating: item.CommunityRating || 0,
-                });
-              }
-            }
-          } catch (e) {
-            console.error(`[private-library-search] Emby search error for ${server.Key}:`, e);
+          const data = await client.getItems({
+            IncludeItemTypes: 'Movie,Series',
+            Recursive: true,
+            Fields: 'Overview,ProductionYear',
+            searchTerm: keyword,
+            Limit: 30,
+            SortBy: 'SortName',
+            SortOrder: 'Ascending',
+          });
+
+          const items = data?.Items || [];
+          for (const item of items) {
+            results.push({
+              id: item.Id,
+              source: `emby:${source.key || 'default'}`,
+              title: item.Name,
+              poster: item.ImageTags?.Primary
+                ? `${source.ServerURL || ''}/emby/Items/${item.Id}/Images/Primary?maxHeight=300&quality=80`
+                : '',
+              year: item.ProductionYear ? String(item.ProductionYear) : '',
+              rating: item.CommunityRating || 0,
+            });
           }
+        } catch (e) {
+          console.error(`[private-library-search] Emby search error:`, e);
         }
-      } catch (e) {
-        console.error('[private-library-search] Emby search error:', e);
       }
     }
 
