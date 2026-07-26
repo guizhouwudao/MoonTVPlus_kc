@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
           for (const item of items) {
             results.push({
               id: item.Id,
-              source: `emby:${source.key || 'default'}`,
+              source: `emby_${source.key || 'default'}`,
               title: item.Name,
               poster: item.ImageTags?.Primary
                 ? `${source.ServerURL || ''}/emby/Items/${item.Id}/Images/Primary?maxHeight=300&quality=80`

@@ -74,7 +74,7 @@ export default function PrivateLibrarySearchPage() {
   };
 
   const handleCardClick = (item: SearchResult) => {
-    router.push(`/play?source=${encodeURIComponent(item.source)}&id=${encodeURIComponent(item.id)}&title=${encodeURIComponent(item.title)}`);
+    router.push(`/play?source=${item.source}&id=${encodeURIComponent(item.id)}&title=${encodeURIComponent(item.title)}${item.year ? `&year=${item.year}` : ''}`);
   };
 
   return (
