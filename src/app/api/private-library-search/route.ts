@@ -34,7 +34,26 @@ export async function GET(request: NextRequest) {
         const { resolvePathMeta } = await import('@/lib/openlist-path-meta');
         const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
 
-        const openlistVideos = db.data?.openlistVideos || [];
+        const metainfoJson = await db.getGlobalValue('video.metainfo');
+        let metaInfo: any = null;
+        if (metainfoJson) {
+          try { metaInfo = JSON.parse(metainfoJson); } catch (e) {}
+        }
+
+        const openlistVideos: any[] = [];
+        if (metaInfo?.folders) {
+          for (const [path, info] of Object.entries(metaInfo.folders)) {
+            if (info && typeof info === 'object') {
+              const folder = info as any;
+              if (folder.videos && Array.isArray(folder.videos)) {
+                for (const v of folder.videos) {
+                  openlistVideos.push({ ...v, path: v.path || path });
+                }
+              }
+            }
+          }
+        }
+
         const kw = keyword.toLowerCase();
         const matched = openlistVideos.filter((v: any) => {
           if (!v.title) return false;
