@@ -31,9 +31,6 @@ export async function GET(request: NextRequest) {
     if (config.OpenListConfig?.Enabled) {
       try {
         const { db } = await import('@/lib/db');
-        const { resolvePathMeta } = await import('@/lib/openlist-path-meta');
-        const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
-
         const metainfoJson = await db.getGlobalValue('video.metainfo');
         let metaInfo: any = null;
         if (metainfoJson) {
@@ -61,11 +58,7 @@ export async function GET(request: NextRequest) {
         });
 
         for (const video of matched.slice(0, 50)) {
-          const meta = resolvePathMeta(video.path);
           let poster = '';
-          if (meta?.tmdbId) {
-            poster = getTMDBImageUrl(meta.tmdbId, meta.mediaType);
-          }
           results.push({
             id: video.id || video.path,
             source: 'openlist',
