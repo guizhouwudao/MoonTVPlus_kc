@@ -2,7 +2,7 @@
 
 'use client';
 
-import { ArrowDownWideNarrow, ArrowUpNarrowWide,Film } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo,useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -608,14 +608,24 @@ export default function PrivateLibraryPage() {
             </p>
           </div>
           {mounted && (
-            <button
-              onClick={() => router.push('/movie-request')}
-              className='flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
-              style={{ marginTop: '10px' }}
-            >
-              <Film size={20} />
-              <span>求片</span>
-            </button>
+            <div className='flex items-center gap-2'>
+              <button
+                onClick={() => router.push('/private-library-search')}
+                className='flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
+                style={{ marginTop: '10px' }}
+              >
+                <Search size={20} />
+                <span>搜索</span>
+              </button>
+              <button
+                onClick={() => router.push('/movie-request')}
+                className='flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
+                style={{ marginTop: '10px' }}
+              >
+                <Film size={20} />
+                <span>求片</span>
+              </button>
+            </div>
           )}
         </div>
 
